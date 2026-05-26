@@ -1,32 +1,29 @@
-# ------------------- Stage 1: Build Stage ------------------------------
-FROM node:21 AS frontend-builder
+# ---------------- Build Stage ----------------
+FROM node:22-slim AS builder
 
-# Set the working directory to /app
+# Working directory
 WORKDIR /app
-
-# Copy the package.json and package-lock.json for dependency installation
-COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+COPY package*.json ./
 
-# Copy the rest of the application code
+RUN npm ci
+
+# Copy source
 COPY . .
 
-# ------------------- Stage 2: Final Stage ------------------------------
-FROM node:21-slim
+# Build frontend
+RUN npm run build
 
-# Set the working directory to /app
-WORKDIR /app
 
-# Copy built assets and dependencies from frontend-builder stage
-COPY --from=frontend-builder /app .
+# ---------------- Production Stage ----------------
+FROM nginx:alpine
 
-# Copy the .env.sample file to .env.local
-COPY .env.docker .env.local
+# Copy built frontend
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 5173 for the Node.js application
-EXPOSE 5173
+# Frontend port
+EXPOSE 80
 
-# Define the default command to run the application in development mode
-CMD ["npm", "run", "dev", "--", "--host"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
