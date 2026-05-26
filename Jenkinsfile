@@ -9,6 +9,11 @@ pipeline {
     parameters {
         string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
         string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
+        choice(
+        name: 'DEPLOY_ENV',
+        choices: ['local','prod'],
+        description: 'Deployment Environment'
+        )
     }
     
     stages {
@@ -70,23 +75,27 @@ pipeline {
         }
         
         stage('Exporting environment variables') {
-            parallel{
-                stage("Backend env setup"){
-                    steps {
-                        script{
-                            dir("Automations"){
-                                sh "bash updatebackendnew.sh"
-                            }
-                        }
-                    }
+
+    when {
+        expression {
+            return params.DEPLOY_ENV == "prod"
+        }
+    }
+
+    parallel {
+
+        stage("Backend env setup") {
+            steps {
+                dir("Automations") {
+                    sh "bash updatebackendnew.sh"
                 }
-                
-                stage("Frontend env setup"){
+            }
+        }
+
+                stage("Frontend env setup") {
                     steps {
-                        script{
-                            dir("Automations"){
-                                sh "bash updatefrontendnew.sh"
-                            }
+                        dir("Automations") {
+                            sh "bash updatefrontendnew.sh"
                         }
                     }
                 }
