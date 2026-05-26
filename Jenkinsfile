@@ -76,21 +76,21 @@ pipeline {
         
         stage('Exporting environment variables') {
 
-    when {
-        expression {
-            return params.DEPLOY_ENV == "prod"
-        }
-    }
-
-    parallel {
-
-        stage("Backend env setup") {
-            steps {
-                dir("Automations") {
-                    sh "bash updatebackendnew.sh"
+            when {
+                expression {
+                    return params.DEPLOY_ENV == "prod"
                 }
             }
-        }
+
+            parallel {
+
+                stage("Backend env setup") {
+                    steps {
+                        dir("Automations") {
+                            sh "bash updatebackendnew.sh"
+                        }
+                    }
+                }
 
                 stage("Frontend env setup") {
                     steps {
